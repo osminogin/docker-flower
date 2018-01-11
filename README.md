@@ -2,6 +2,8 @@
 
 [![](https://img.shields.io/docker/build/osminogin/docker-flower.svg)](https://hub.docker.com/r/osminogin/docker-flower/builds/) [![](https://img.shields.io/docker/stars/osminogin/docker-flower.svg)](https://hub.docker.com/r/osminogin/docker-flower) [![](https://images.microbadger.com/badges/image/osminogin/docker-flower.svg)](https://microbadger.com/images/osminogin/docker-flower) [![License: MIT](https://img.shields.io/badge/License-MIT-lightgrey.svg)](https://opensource.org/licenses/MIT)
 
+Flower monitoring interface for your queues based on RabbitMQ or Redis.
+
 Star this container on Docker Hub :star2: https://hub.docker.com/r/osminogin/flower/
 
 
@@ -19,7 +21,7 @@ docker pull osminogin/flower
 Alternatively you can build the image yourself.
 
 ```bash
-docker build -t tor github.com/osminogin/docker-flower
+docker build -t flower github.com/osminogin/docker-flower
 ```
 
 
@@ -27,7 +29,10 @@ docker build -t tor github.com/osminogin/docker-flower
 
 
 ```bash
-docker run -p 127.0.0.1:5555:5555 --name flower --link redis:redishost osminogin/flower --broker redis://redishost
+docker run --rm --name flower \
+    --publish 127.0.0.1:5555:5555 \
+    --link redis:redishost \
+    osminogin/flower --broker redis://redishost
 ```
 
 After start Flower available on `localhost:5555`
@@ -39,24 +44,24 @@ Don't bind Flower management interface port 5555 to public network addresses if 
 
 ## Ports
 
-* `5555`
+* `5555` - Flower WebUI.
 
 
 ## Unit file for systemd
 
-#### tor.service
+#### flower.service
 
 ```ini
 [Unit]
 Description=Flower service
-After=docker.service
-Requires=docker.service
+After=docker.service rabbit.service
+Requires=docker.service rabbit.service
 
 [Service]
 Restart=on-failure
 RestartSec=60s
 ExecStartPre=/usr/bin/docker pull osminogin/flower
-ExecStart=/usr/bin/docker run --rm --name flower -p 127.0.0.1:5555:5555 osminogin/flower --broker redis://redishost
+ExecStart=/usr/bin/docker run --rm --name flower -p 127.0.0.1:5555:5555 --link rabbit:rabbit osminogin/flower --broker amqp://rabbit
 ExecStop=/usr/bin/docker stop flower
 
 [Install]
